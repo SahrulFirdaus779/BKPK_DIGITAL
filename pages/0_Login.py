@@ -22,39 +22,18 @@ if st.session_state.get("logged_in"):
     st.switch_page("app.py")
 
 
-# Setup scope Google API
+# --- Setup koneksi Google Sheets ---
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-
 try:
-    # Ambil kredensial dari secrets
     service_account_info = st.secrets["gcp_service_account"]
-
-    # Buat credentials object
-    CREDS = GoogleCredentials.from_service_account_info(
-        service_account_info,
-        scopes=SCOPE
-    )
-
-    # Authorize dan akses spreadsheet
-    client = gspread.authorize(CREDS)
+    creds = GoogleCredentials.from_service_account_info(service_account_info, scopes=SCOPE)
+    client = gspread.authorize(creds)
     sheet = client.open(st.secrets["sheet_name"])
-
-    # Ambil data dari worksheet bernama "mentor"
-    worksheet = sheet.worksheet("mentor")
-    mentor_data = worksheet.get_all_records()
-
-    # Tampilkan dalam DataFrame
-    mentor_df = pd.DataFrame(mentor_data)
-    mentor_df['id'] = pd.to_numeric(mentor_df['id'], errors='coerce').fillna(0).astype(int)
-
-    st.success("Berhasil terhubung ke Google Sheets ✅")
-    st.dataframe(mentor_df)
-
+    mentor_df = pd.DataFrame(sheet.worksheet("mentor").get_all_records())
 except Exception as e:
-    st.error(f"❌ Gagal terhubung ke Google Sheet: {e}")
+    st.error(f"Gagal terhubung ke Google Sheet: {e}")
     st.stop()
-
-
+    
 # --- Tampilan Form Login ---
 st.set_page_config(page_title="Login Presensi Mentoring", page_icon="🔑", layout="centered")
 
