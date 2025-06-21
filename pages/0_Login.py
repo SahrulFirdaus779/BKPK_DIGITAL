@@ -22,20 +22,32 @@ if st.session_state.get("logged_in"):
 
 # --- Setup Google Sheets ---
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-mentor_df = pd.DataFrame() # Inisialisasi kosong
+mentor_df = pd.DataFrame()  # Inisialisasi kosong
 CLIENT = None
 SHEET = None
 
-try:
-    CREDS = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", SCOPE)
-    CLIENT = gspread.authorize(CREDS)
-    SHEET = CLIENT.open("Presensi Mentoring STT NF") # Ganti dengan nama spreadsheet Anda
+# JSON service account dalam bentuk string (misalnya Anda ambil dari secret manager atau environment variable)
+gcp_service_account_json = """
+{ 
+  ... 
+}  # Ganti titik-titik dengan isi lengkap JSON Anda, pastikan \n diubah jadi baris baru
+"""
 
+try:
+    # Konversi string JSON menjadi dictionary
+    json_dict = json.loads(gcp_service_account_json.replace("\\n", "\n"))
+    CREDS = ServiceAccountCredentials.from_json_keyfile_dict(json_dict, SCOPE)
+
+    # Autentikasi dan akses sheet
+    CLIENT = gspread.authorize(CREDS)
+    SHEET = CLIENT.open("Presensi Mentoring STT NF")  # Nama file Google Sheets
+
+    # Ambil data dari worksheet 'mentor'
     mentor_df = pd.DataFrame(SHEET.worksheet("mentor").get_all_records())
     mentor_df['id'] = pd.to_numeric(mentor_df['id'], errors='coerce').fillna(0).astype(int)
 
 except FileNotFoundError:
-    st.error("Error: File 'service_account.json' tidak ditemukan di direktori proyek. Pastikan file ada.")
+    st.error("Error: File 'service_account.json' tidak ditemukan.")
     st.stop()
 except Exception as e:
     st.error(f"Gagal terhubung ke Google Sheet: {e}. Pastikan kredensial service account benar dan Google Sheets API aktif.")
