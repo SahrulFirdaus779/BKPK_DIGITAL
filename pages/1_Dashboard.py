@@ -21,17 +21,19 @@ CLIENT = None
 SHEET = None
 
 try:
-    CREDS = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
+    CREDS = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", SCOPE)
     CLIENT = gspread.authorize(CREDS)
-    SHEET = CLIENT.open(st.secrets["sheet_name"])
+    SHEET = CLIENT.open("Presensi Mentoring STT NF") # Ganti dengan nama spreadsheet Anda
 
     mentor_df = pd.DataFrame(SHEET.worksheet("mentor").get_all_records())
     mentee_df = pd.DataFrame(SHEET.worksheet("mentee").get_all_records())
     presensi_df = pd.DataFrame(SHEET.worksheet("presensi").get_all_records())
 
-# Hapus FileNotFoundError
+except FileNotFoundError:
+    st.error("Error: File 'service_account.json' tidak ditemukan di direktori proyek. Pastikan file ada.")
+    st.stop()
 except Exception as e:
-    st.error(f"Terjadi kesalahan saat memuat data dari Google Sheets: {e}. Pastikan kredensial service account benar di `secrets.toml` dan Google Sheets API aktif.")
+    st.error(f"Terjadi kesalahan saat memuat data dari Google Sheets: {e}. Pastikan kredensial service account benar dan Google Sheets API aktif.")
     st.stop()
 
 # --- Konversi tipe data numerik dan olah status_kehadiran ---

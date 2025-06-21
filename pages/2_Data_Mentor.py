@@ -1,3 +1,4 @@
+# pages/2_Data_Mentor.py
 import streamlit as st
 import pandas as pd
 import gspread
@@ -10,12 +11,12 @@ require_admin()
 # --- Setup Google Sheets ---
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 try:
-    CREDS = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
+    CREDS = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", SCOPE)
     CLIENT = gspread.authorize(CREDS)
-    SHEET = CLIENT.open(st.secrets["sheet_name"])
+    SHEET = CLIENT.open("Presensi Mentoring STT NF")
     mentor_ws = SHEET.worksheet("mentor")
 except Exception as e:
-    st.error(f"Gagal mengakses Google Sheets: {e}. Pastikan kredensial service account benar di `secrets.toml` dan Google Sheets API aktif.")
+    st.error(f"Gagal mengakses Google Sheets: {e}")
     st.stop()
 
 # --- Fungsi ---
@@ -72,7 +73,7 @@ with st.form("form_tambah"):
     if submit and nama_baru and email_baru:
         if tambah_mentor(nama_baru, email_baru):
             st.success("Mentor berhasil ditambahkan.")
-            st.rerun() # Diperbarui: st.experimental_rerun() -> st.rerun()
+            st.experimental_rerun()
 
 st.markdown("---")
 st.markdown("### ✏️ Edit / Hapus Mentor")
@@ -88,9 +89,9 @@ if not data.empty:
     if col1.button("💾 Simpan Perubahan"):
         if update_mentor(idx, nama_edit, email_edit):
             st.success("Data mentor diperbarui.")
-            st.rerun() # Diperbarui: st.experimental_rerun() -> st.rerun()
+            st.experimental_rerun()
     if col2.button("🗑️ Hapus Mentor"):
         if st.confirm("Yakin ingin menghapus mentor ini?"):
             if hapus_mentor(idx):
                 st.success("Mentor dihapus.")
-                st.rerun() # Diperbarui: st.experimental_rerun() -> st.rerun()
+                st.experimental_rerun()

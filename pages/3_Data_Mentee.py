@@ -13,13 +13,13 @@ mentor_id = st.session_state.get("mentor_id")
 # --- Setup Google Sheets ---
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 try:
-    CREDS = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
+    CREDS = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", SCOPE)
     CLIENT = gspread.authorize(CREDS)
-    SHEET = CLIENT.open(st.secrets["sheet_name"])
+    SHEET = CLIENT.open("Presensi Mentoring STT NF")
     mentee_ws = SHEET.worksheet("mentee")
     mentor_ws = SHEET.worksheet("mentor")
 except Exception as e:
-    st.error(f"Gagal membuka Google Sheets: {e}. Pastikan kredensial service account benar di `secrets.toml` dan Google Sheets API aktif.")
+    st.error(f"Gagal membuka Google Sheets: {e}")
     st.stop()
 
 # --- Load Data ---

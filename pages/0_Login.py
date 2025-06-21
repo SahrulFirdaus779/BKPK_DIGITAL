@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from google.oauth2.service_account import Credentials as GoogleCredentials # <<< Pastikan baris ini ada
 import time # Untuk simulasi loading atau jeda
 
 # --- Inisialisasi session_state ---
@@ -21,19 +20,27 @@ if 'mentor_id' not in st.session_state:
 if st.session_state.get("logged_in"):
     st.switch_page("app.py")
 
-
-# --- Setup koneksi Google Sheets ---
+# --- Setup Google Sheets ---
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+mentor_df = pd.DataFrame() # Inisialisasi kosong
+CLIENT = None
+SHEET = None
+
 try:
-    service_account_info = st.secrets["gcp_service_account"]
-    creds = GoogleCredentials.from_service_account_info(service_account_info, scopes=SCOPE)
-    client = gspread.authorize(creds)
-    sheet = client.open(st.secrets["sheet_name"])
-    mentor_df = pd.DataFrame(sheet.worksheet("mentor").get_all_records())
-except Exception as e:
-    st.error(f"Gagal terhubung ke Google Sheet: {e}")
+    CREDS = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", SCOPE)
+    CLIENT = gspread.authorize(CREDS)
+    SHEET = CLIENT.open("Presensi Mentoring STT NF") # Ganti dengan nama spreadsheet Anda
+
+    mentor_df = pd.DataFrame(SHEET.worksheet("mentor").get_all_records())
+    mentor_df['id'] = pd.to_numeric(mentor_df['id'], errors='coerce').fillna(0).astype(int)
+
+except FileNotFoundError:
+    st.error("Error: File 'service_account.json' tidak ditemukan di direktori proyek. Pastikan file ada.")
     st.stop()
-    
+except Exception as e:
+    st.error(f"Gagal terhubung ke Google Sheet: {e}. Pastikan kredensial service account benar dan Google Sheets API aktif.")
+    st.stop()
+
 # --- Tampilan Form Login ---
 st.set_page_config(page_title="Login Presensi Mentoring", page_icon="🔑", layout="centered")
 
